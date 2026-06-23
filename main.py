@@ -165,7 +165,7 @@ def SimuladorTCL():
 
 
 def Teste():
-    quantd_amostras = 600
+    quantd_amostras = 1000
     st.title(f"Casos de Teste para {quantd_amostras} amostras")
     #Define o o tamanho da amostra
     n_amostra = st.number_input("Tamanho da Amostra (n)", value=30, min_value=1)
