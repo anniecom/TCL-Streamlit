@@ -196,6 +196,7 @@ def Teste():
 # --- NAVEGAÇÃO ENTRE PÁGINAS POR SIDEBAR ---
 pagina = st.sidebar.radio("Ir para:", ["Simulador TCL", "Testes (i, ii, iii)"])
 
+pagina = ""
 if pagina == "Simulador TCL":
     SimuladorTCL()
 else:
