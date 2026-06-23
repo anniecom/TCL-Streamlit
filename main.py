@@ -168,7 +168,7 @@ def Teste():
     st.title("Casos de Teste para 100 amostras")
     #Define o o tamanho da amostra
     n_amostra = st.number_input("Tamanho da Amostra (n)", value=30, min_value=1)
-    quantd_amostras = 100
+    quantd_amostras = 600
 
     dist = {
         ("Binomial", "Probabilidade sucesso", 0.05),
