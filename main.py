@@ -107,7 +107,6 @@ def graficos(
                     height: 350px;
                     width: 100%;
                     background-color: white; /* Fica invisível se adaptando ao tema */
-                    margin-bottom: -50px; /* Truque CSS para o gráfico plotar exatamente por cima dele */
                 }
             </style>
             <div class="quadro-suporte"></div>
@@ -161,7 +160,7 @@ def graficos(
 
             if proximo_frame <= quantd_amostras:
                 st.session_state[state_key] = proximo_frame
-                time.sleep(0.5) 
+                time.sleep(0.8) 
                 st.rerun()
             else:
                 st.session_state[state_key] = None
