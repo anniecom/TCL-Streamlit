@@ -45,16 +45,17 @@ class GeradorTCL:
         #Retorna as médias amostrais, média e sigima teórcios da distribuiçcap
         return medias_amostrais, media_dist, sigma_dist
 
-def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padronizadas, key = "bt"):
-    #Faz os graficos de histograma da normal
+def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_padronizadas, key="bt"):
+    # Faz os graficos de histograma da normal
     coli1, coli2 = st.columns(2)
 
     with coli1:
-        #Histograma dos dados nao padronizados
+        # 1. HISTOGRAMA DA ESCALA ORIGINAL (TOTALMENTE FIXO E ESTÁTICO)
         st.subheader("Escala Original")
         fig1 = plt.figure(figsize=(5, 4))
         ax1 = fig1.add_subplot(111)
 
+        # Usamos sempre o total de amostras fixo para ele NUNCA mudar ou piscar durante a animação do outro lado
         contagens, intervalos, _ = ax1.hist(
             medias_amostrais[:quantd_amostras], bins=30, density=True, alpha=0.6, color='#2b5c8f', label='Médias Amostrais'
         )
@@ -69,40 +70,69 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
         plt.close(fig1)
 
     with coli2:
-        #Histograma dos dados padronizados
+        # 2. HISTOGRAMA DA ESCALA PADRONIZADA (ANIMADO OU SLIDER)
         st.subheader("Escala Padronizada (Z)")
+        
+        animacao = st.button("Ver Animação Histograma", key="bt" + key)
+        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
+        
         espaco_grafico_z = st.empty()
 
+        # Criamos a estrutura do gráfico Z aproveitando a mesma figura
+        fig2 = plt.figure(figsize=(5, 4))
+        ax2 = fig2.add_subplot(111)
+        x2 = np.linspace(-3.5, 3.5, 100)
+        y2 = norm.pdf(x2, loc=0, scale=1)
+
         def desenhar_grafico_z(tamanho_atual):
-            fig2 = plt.figure(figsize=(5, 4))
-            ax2 = fig2.add_subplot(111)
-
-            contagens2, intervalos2, _ = ax2.hist(
-                medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71'
-            )
-
-            x2 = np.linspace(intervalos2[0], intervalos2[-1], 100)
-            y2 = norm.pdf(x2, loc=0, scale=1)
+            ax2.clear() # Limpa apenas o conteúdo interno para velocidade máxima
+            
+            # Plota as barras até o tamanho do frame atual
+            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
             ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
-            ax2.set_xlim([min(-3.5, intervalos2[0]), max(3.5, intervalos2[-1])])
+            # TRAVA OS EIXOS: Evita que o gráfico mude de tamanho e dê saltos visuais
+            ax2.set_xlim([-3.5, 3.5])
+            ax2.set_ylim([0, 0.5]) # Fixa o teto para ver as médias se aproximando da curva perfeitamente
+            
             ax2.grid(True, alpha=0.1)
             ax2.legend(fontsize=8)
+            ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
 
             espaco_grafico_z.pyplot(fig2)
-            plt.close(fig2)
 
-        animacao = st.button("Ver Animação Histograma", key = "bt" + key)
-        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key= "sl" + key)
+        # --- MECANISMO DE ANIMAÇÃO SEM TRAVAMENTO ---
+        # Inicializa o estado do frame na memória do Streamlit
+        state_key = f"frame_{key}"
+        if state_key not in st.session_state:
+            st.session_state[state_key] = None
 
+        # Se clicou no botão, engaja o início da animação
         if animacao:
-            passos = np.linspace(10, quantd_amostras, 1, dtype=int)
-            for tam in passos:
-                desenhar_grafico_z(tam)
-                time.sleep(0.1)
+            st.session_state[state_key] = 10
+
+        # Se a animação estiver rodando (passo a passo)
+        if st.session_state[state_key] is not None:
+            frame_atual = st.session_state[state_key]
+            desenhar_grafico_z(frame_atual)
+            
+            # Define o tamanho do salto por frame (divide em ~40 passos para ir rápido e fluido)
+            passo_dinamico = max(1, int(quantd_amostras / 40))
+            proximo_frame = frame_atual + passo_dinamico
+            
+            if proximo_frame <= quantd_amostras:
+                st.session_state[state_key] = proximo_frame
+                time.sleep(0.01) # Pequena pausa para o olho humano acompanhar o crescimento
+                st.rerun() # Força o Streamlit a renderizar este frame AGORA na tela
+            else:
+                # Fim da animação: estabiliza no valor total
+                st.session_state[state_key] = None
+                desenhar_grafico_z(quantd_amostras)
         else:
+            # Se não está animando, responde estaticamente ao Slider de forma independente
             desenhar_grafico_z(posc_slider)
 
+        plt.close(fig2)
         
 def SimuladorTCL():
     st.title("Simulador TCL")
