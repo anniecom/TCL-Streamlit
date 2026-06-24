@@ -129,63 +129,63 @@ def graficos(
         buf.close()
 
 
-# ==========================================
-# CÓDIGO DO FLUXO PRINCIPAL (FORA DA FUNÇÃO)
-# ==========================================
-
-# 1. Cria os controles fora e antes das colunas gráficos
-st.write("### Controles de Visualização")
-animacao = st.button("▶️ Ver Animação Histograma")
-posc_slider = st.slider(
-    "Quantidade de amostras (Z):",
-    10,
-    quantd_amostras,
-    quantd_amostras,
-    key="slider_global",
-)
-
-# 2. Gerencia o estado da animação no fluxo principal
-if "frame_ativo" not in st.session_state:
-    st.session_state.frame_ativo = None
-
-if animacao:
-    st.session_state.frame_ativo = 10
-
-# 3. Determina qual tamanho enviar para a função rodar
-if st.session_state.frame_ativo is not None:
-    tamanho_atual = st.session_state.frame_ativo
-
-    # Renderiza o frame atual
-    graficos(
-        media_u,
-        sigma_media,
+    # ==========================================
+    # CÓDIGO DO FLUXO PRINCIPAL (FORA DA FUNÇÃO)
+    # ==========================================
+    
+    # 1. Cria os controles fora e antes das colunas gráficos
+    st.write("### Controles de Visualização")
+    animacao = st.button("▶️ Ver Animação Histograma")
+    posc_slider = st.slider(
+        "Quantidade de amostras (Z):",
+        10,
         quantd_amostras,
-        medias_amostrais,
-        medias_padronizadas,
-        tamanho_atual,
+        quantd_amostras,
+        key="slider_global",
     )
-
-    # Avança para o próximo frame
-    passo_dinamico = max(1, int(quantd_amostras / 40))
-    proximo = tamanho_atual + passo_dinamico
-
-    if proximo <= quantd_amostras:
-        st.session_state.frame_ativo = proximo
-        time.sleep(0.01)
-        st.rerun()
-    else:
+    
+    # 2. Gerencia o estado da animação no fluxo principal
+    if "frame_ativo" not in st.session_state:
         st.session_state.frame_ativo = None
-        st.rerun()
-else:
-    # Se não estiver animando, manda o valor fixo escolhido no slider
-    graficos(
-        media_u,
-        sigma_media,
-        quantd_amostras,
-        medias_amostrais,
-        medias_padronizadas,
-        posc_slider,
-    )
+    
+    if animacao:
+        st.session_state.frame_ativo = 10
+    
+    # 3. Determina qual tamanho enviar para a função rodar
+    if st.session_state.frame_ativo is not None:
+        tamanho_atual = st.session_state.frame_ativo
+    
+        # Renderiza o frame atual
+        graficos(
+            media_u,
+            sigma_media,
+            quantd_amostras,
+            medias_amostrais,
+            medias_padronizadas,
+            tamanho_atual,
+        )
+    
+        # Avança para o próximo frame
+        passo_dinamico = max(1, int(quantd_amostras / 40))
+        proximo = tamanho_atual + passo_dinamico
+    
+        if proximo <= quantd_amostras:
+            st.session_state.frame_ativo = proximo
+            time.sleep(0.01)
+            st.rerun()
+        else:
+            st.session_state.frame_ativo = None
+            st.rerun()
+    else:
+        # Se não estiver animando, manda o valor fixo escolhido no slider
+        graficos(
+            media_u,
+            sigma_media,
+            quantd_amostras,
+            medias_amostrais,
+            medias_padronizadas,
+            posc_slider,
+        )
     
 def SimuladorTCL():
     st.title("Simulador TCL")
