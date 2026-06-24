@@ -107,7 +107,8 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
             
             for tam in passos:
                 atualizar_desenho_z(tam)
-                time.sleep(0.01) # Delay mínimo para manter a fluidez
+                st.rerun()
+                time.sleep(0.1) # Delay mínimo para manter a fluidez
                 
             # Frame final obrigatório para cravar o valor máximo
             atualizar_desenho_z(quantd_amostras)
