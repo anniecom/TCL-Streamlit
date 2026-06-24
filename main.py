@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import time
 import io
-import base64
+import imageio
 
 class GeradorTCL:
     @staticmethod
@@ -47,35 +47,6 @@ class GeradorTCL:
         #Retorna as médias amostrais, média e sigima teórcios da distribuiçcap
         return medias_amostrais, media_dist, sigma_dist
 
-@st.cache_data
-def renderizar_grafico_original(
-    media_u, sigma_media, quantd_amostras, _medias_amostrais
-):
-    fig1 = plt.figure(figsize=(5, 4))
-    ax1 = fig1.add_subplot(111)
-
-    contagens, intervalos, _ = ax1.hist(
-        _medias_amostrais[:quantd_amostras],
-        bins=30,
-        density=True,
-        alpha=0.6,
-        color='#2b5c8f',
-        label='Médias Amostrais',
-    )
-
-    x1 = np.linspace(intervalos.min(), intervalos.max(), 100)
-    y1 = norm.pdf(x1, loc=media_u, scale=sigma_media)
-    ax1.plot(x1, y1, 'r-', lw=2, label='Normal Teórica')
-    ax1.legend(fontsize=8)
-    ax1.grid(True, alpha=0.1)
-
-    buf = io.BytesIO()
-    fig1.savefig(buf, format='png', bbox_inches='tight')
-    plt.close(fig1)
-    return buf.getvalue()
-
-
-# 2. A função completa com os botões e sliders isolados dentro dela
 def graficos(
     media_u,
     sigma_media,
@@ -84,83 +55,111 @@ def graficos(
     medias_padronizadas,
     key="bt",
 ):
-    # Criamos as colunas principais
     coli1, coli2 = st.columns(2)
 
     with coli1:
         st.subheader("Escala Original")
-        # Puxa o gráfico estático instantaneamente do cache
-        img_bytes_original = renderizar_grafico_original(
-            media_u, sigma_media, quantd_amostras, medias_amostrais
+        fig1 = plt.figure(figsize=(5, 4))
+        ax1 = fig1.add_subplot(111)
+        ax1.hist(
+            medias_amostrais[:quantd_amostras],
+            bins=30,
+            density=True,
+            alpha=0.6,
+            color='#2b5c8f',
         )
-        st.image(img_bytes_original, use_container_width=True)
+        x1 = np.linspace(min(medias_amostrais), max(medias_amostrais), 100)
+        ax1.plot(x1, norm.pdf(x1, loc=media_u, scale=sigma_media), 'r-', lw=2)
+        ax1.grid(True, alpha=0.1)
+        st.pyplot(fig1)
+        plt.close(fig1)
 
     with coli2:
         st.subheader("Escala Padronizada (Z)")
 
         animacao = st.button("Ver Animação Histograma", key="bt" + key)
-        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
-        
-        espaco_grafico_z = st.empty()
 
-        # 1. FORÇAMOS A FIGURA A TER FUNDO BRANCO SÓLIDO (facecolor)
-        fig2 = plt.figure(figsize=(5, 4), facecolor='white')
-        ax2 = fig2.add_subplot(111)
-        ax2.set_facecolor('white') # Fundo interno também branco
-        
-        x2 = np.linspace(-3.5, 3.5, 100)
-        y2 = norm.pdf(x2, loc=0, scale=1)
-       
-        # Configuração da Figura Z
-        fig2 = plt.figure(figsize=(5, 4))
-        ax2 = fig2.add_subplot(111)
-        x2 = np.linspace(-3.5, 3.5, 100)
-        y2 = norm.pdf(x2, loc=0, scale=1)
+        # 1. ESTADO PARA GUARDAR O GIF GERADO
+        gif_key = f"gif_{key}"
+        if gif_key not in st.session_state:
+            st.session_state[gif_key] = None
 
-        def desenhar_grafico_z(tamanho_atual):
-            ax2.clear()
-            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
-            ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
-
-            # Fixação milimétrica dos eixos
-            ax2.set_xlim([-3.5, 3.5])
-            ax2.set_ylim([0, 0.5])
-            ax2.grid(True, alpha=0.1)
-            ax2.legend(fontsize=8)
-            ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
-
-            # Salvando o buffer
-            buf = io.BytesIO()
-            fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100) # dpi fixo ajuda a estabilizar o tamanho da imagem
-            buf.seek(0)
-            # Força a atualização mantendo a mesma tag de referência na tela
-            espaco_grafico_z.image(buf, use_container_width=True)
-            buf.close()
-
-        # --- Lógica de Controle da Velocidade e Estado ---
-        state_key = f"frame_{key}"
-        if state_key not in st.session_state:
-            st.session_state[state_key] = None
+        # 2. SE CLICAR EM ANIMAR, GERA TODOS OS FRAMES DE UMA VEZ NA MEMÓRIA
         if animacao:
-            st.session_state[state_key] = 10
-            
-        if st.session_state[state_key] is not None:
-            frame_atual = st.session_state[state_key]
-            desenhar_grafico_z(frame_atual)
-            passo_dinamico = max(1, int(quantd_amostras / 30))
-            proximo_frame = frame_atual + passo_dinamico
+            with st.spinner("Gerando animação fluida..."):
+                frames = []
+                passos = np.linspace(10, quantd_amostras, 30, dtype=int)
 
-            if proximo_frame <= quantd_amostras:
-                st.session_state[state_key] = proximo_frame
-                time.sleep(0.8) 
+                # Criamos a estrutura fixa do gráfico
+                fig2 = plt.figure(figsize=(5, 4))
+                ax2 = fig2.add_subplot(111)
+                x2 = np.linspace(-3.5, 3.5, 100)
+                y2 = norm.pdf(x2, loc=0, scale=1)
+
+                for tam in passos:
+                    ax2.clear()
+                    # Desenha as barras que mudam
+                    ax2.hist(
+                        medias_padronizadas[:tam],
+                        bins=30,
+                        density=True,
+                        alpha=0.6,
+                        color='#2ecc71',
+                    )
+                    # Desenha os eixos e curva que são fixos
+                    ax2.plot(x2, y2, 'r-', lw=2)
+                    ax2.set_xlim([-3.5, 3.5])
+                    ax2.set_ylim([0, 0.5])
+                    ax2.grid(True, alpha=0.1)
+                    ax2.set_title(
+                        f"Amostras acumuladas: {tam}", fontsize=9
+                    )
+
+                    # Salva o frame atual na memória como imagem pura
+                    buf = io.BytesIO()
+                    fig2.savefig(buf, format='png', bbox_inches='tight', dpi=120)
+                    buf.seek(0)
+                    frames.append(imageio.v2.imread(buf))
+                    buf.close()
+
+                plt.close(fig2)
+
+                # Compila todos os frames em um GIF na memória
+                gif_buffer = io.BytesIO()
+                imageio.mimsave(
+                    gif_buffer, frames, format='GIF', fps=10, loop=0
+                )
+                st.session_state[gif_key] = gif_buffer.getvalue()
+
+        # 3. EXIBIÇÃO NA TELA
+        if st.session_state[gif_key] is not None:
+            # Exibe o GIF gerado. O navegador roda ele nativamente em loop perfeitamente liso
+            st.image(st.session_state[gif_key], use_container_width=True)
+            if st.button("Voltar para gráfico fixo"):
+                st.session_state[gif_key] = None
                 st.rerun()
-            else:
-                st.session_state[state_key] = None
-                desenhar_grafico_z(quantd_amostras)
         else:
-            desenhar_grafico_z(posc_slider)
-
-        plt.close(fig2)
+            # Caso não tenha clicado no botão, mostra apenas o gráfico final estático padrão
+            fig_fixo = plt.figure(figsize=(5, 4))
+            ax_fixo = fig_fixo.add_subplot(111)
+            ax_fixo.hist(
+                medias_padronizadas[:quantd_amostras],
+                bins=30,
+                density=True,
+                alpha=0.6,
+                color='#2ecc71',
+            )
+            ax_fixo.plot(
+                np.linspace(-3.5, 3.5, 100),
+                norm.pdf(np.linspace(-3.5, 3.5, 100), 0, 1),
+                'r-',
+                lw=2,
+            )
+            ax_fixo.set_xlim([-3.5, 3.5])
+            ax_fixo.set_ylim([0, 0.5])
+            ax_fixo.grid(True, alpha=0.1)
+            st.pyplot(fig_fixo)
+            plt.close(fig_fixo)
 
 def SimuladorTCL():
     st.title("Simulador TCL")
