@@ -101,9 +101,6 @@ def graficos(
         container_controles = st.container()
         espaco_grafico_z = st.empty()
 
-        with container_controles:
-            animacao = st.button("Ver Animação Histograma", key="bt" + key)
-            posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
 
         # Configuração da Figura Z
         fig2 = plt.figure(figsize=(5, 4))
@@ -130,6 +127,10 @@ def graficos(
             # Força a atualização mantendo a mesma tag de referência na tela
             espaco_grafico_z.image(buf, use_container_width=True)
             buf.close()
+
+        with container_controles:
+            animacao = st.button("Ver Animação Histograma", key="bt" + key)
+            posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
 
         # --- Lógica de Controle da Velocidade e Estado ---
         state_key = f"frame_{key}"
