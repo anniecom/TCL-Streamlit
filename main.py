@@ -137,9 +137,9 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
             desenhar_grafico_z(posc_slider)
 
         plt.close(fig2)
-        
-animacao = st.button("Ver Animação Histograma", key="bt" + key)
-posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
+                
+    animacao = st.button("Ver Animação Histograma")
+    posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras)
 
 def SimuladorTCL():
     st.title("Simulador TCL")
