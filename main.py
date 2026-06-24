@@ -105,7 +105,7 @@ def graficos(
                 .quadro-suporte {
                     height: 350px;
                     width: 100%;
-                    background-color: transparent; /* Fica invisível se adaptando ao tema */
+                    background-color: white; /* Fica invisível se adaptando ao tema */
                     margin-bottom: -350px; /* Truque CSS para o gráfico plotar exatamente por cima dele */
                 }
             </style>
@@ -124,42 +124,23 @@ def graficos(
 
         def desenhar_grafico_z(tamanho_atual):
             ax2.clear()
-            ax2.hist(
-                medias_padronizadas[:tamanho_atual],
-                bins=30,
-                density=True,
-                alpha=0.6,
-                color='#2ecc71',
-            )
+            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
             ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
+            # Fixação milimétrica dos eixos
             ax2.set_xlim([-3.5, 3.5])
             ax2.set_ylim([0, 0.5])
             ax2.grid(True, alpha=0.1)
             ax2.legend(fontsize=8)
             ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
 
-            # 1. Transforma o gráfico em bytes comuns
+            # Salvando o buffer
             buf = io.BytesIO()
-            fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+            fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100) # dpi fixo ajuda a estabilizar o tamanho da imagem
             buf.seek(0)
-            img_bytes = buf.getvalue()
+            # Força a atualização mantendo a mesma tag de referência na tela
+            espaco_grafico_z.image(buf, use_container_width=True)
             buf.close()
-
-            # 2. Transforma os bytes em uma string Base64 (para injetar direto no HTML)
-            encoded = base64.b64encode(img_bytes).decode()
-
-            # 3. CRIA O ESCUDO BRANCO FIXO ATRÁS
-            # Criamos uma div HTML com fundo branco estático (background-color: white)
-            # que tem exatamente o tamanho do gráfico. A imagem fica colada em cima dele.
-            html_com_fundo_branco = f"""
-            <div style="background-color: white; width: 100%; height: auto; display: flex; justify-content: center; align-items: center;">
-                <img src="data:image/png;base64,{encoded}" style="width: 100%; height: auto; display: block;" />
-            </div>
-            """
-
-            # Atualiza o container mandando o HTML estruturado com o fundo fixo
-            espaco_grafico_z.html(html_com_fundo_branco)
 
         with container_controles:
             animacao = st.button("Ver Animação Histograma", key="bt" + key)
