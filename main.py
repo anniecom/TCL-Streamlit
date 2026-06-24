@@ -46,101 +46,147 @@ class GeradorTCL:
         #Retorna as médias amostrais, média e sigima teórcios da distribuiçcap
         return medias_amostrais, media_dist, sigma_dist
 
-def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_padronizadas, key="bt"):
-    # Faz os graficos de histograma da normal
+# 1. Gráfico Original Cacheado (Garante zero piscada na Coluna 1)
+@st.cache_data
+def renderizar_grafico_original(
+    media_u, sigma_media, quantd_amostras, _medias_amostrais
+):
+    fig1 = plt.figure(figsize=(5, 4))
+    ax1 = fig1.add_subplot(111)
+
+    contagens, intervalos, _ = ax1.hist(
+        _medias_amostrais[:quantd_amostras],
+        bins=30,
+        density=True,
+        alpha=0.6,
+        color='#2b5c8f',
+        label='Médias Amostrais',
+    )
+
+    x1 = np.linspace(intervalos.min(), intervalos.max(), 100)
+    y1 = norm.pdf(x1, loc=media_u, scale=sigma_media)
+    ax1.plot(x1, y1, 'r-', lw=2, label='Normal Teórica')
+    ax1.legend(fontsize=8)
+    ax1.grid(True, alpha=0.1)
+
+    buf = io.BytesIO()
+    fig1.savefig(buf, format='png', bbox_inches='tight')
+    plt.close(fig1)
+    return buf.getvalue()
+
+
+# 2. Função de renderização pura (Sem inputs dentro dela)
+def graficos(
+    media_u,
+    sigma_media,
+    quantd_amostras,
+    medias_amostrais,
+    medias_padronizadas,
+    tamanho_renderizar,
+):
     coli1, coli2 = st.columns(2)
 
     with coli1:
-        # 1. HISTOGRAMA DA ESCALA ORIGINAL (TOTALMENTE FIXO E ESTÁTICO)
         st.subheader("Escala Original")
-        fig1 = plt.figure(figsize=(5, 4))
-        ax1 = fig1.add_subplot(111)
-        posc_i = quantd_amostras
-
-        # Usamos sempre o total de amostras fixo para ele NUNCA mudar ou piscar durante a animação do outro lado
-        contagens, intervalos, _ = ax1.hist(
-            medias_amostrais[:posc_i], bins=30, density=True, alpha=0.6, color='#2b5c8f', label='Médias Amostrais'
+        img_bytes_original = renderizar_grafico_original(
+            media_u, sigma_media, quantd_amostras, medias_amostrais
         )
-
-        x1 = np.linspace(intervalos.min(), intervalos.max(), 100)
-        y1 = norm.pdf(x1, loc=media_u, scale=sigma_media)
-        ax1.plot(x1, y1, 'r-', lw=2, label='Normal Teórica')
-        ax1.legend(fontsize=8)
-        ax1.grid(True, alpha=0.1)
-
-        st.pyplot(fig1)
-        plt.close(fig1)
+        st.image(img_bytes_original, use_container_width=True)
 
     with coli2:
-        # 2. HISTOGRAMA DA ESCALA PADRONIZADA (ANIMADO OU SLIDER)
-        st.subheader("Escala Padronizada (Z)")        
+        st.subheader("Escala Padronizada (Z)")
+
+        # Container do gráfico Z fixo e estático
         espaco_grafico_z = st.empty()
 
-        # Criamos a estrutura do gráfico Z aproveitando a mesma figura
         fig2 = plt.figure(figsize=(5, 4))
         ax2 = fig2.add_subplot(111)
         x2 = np.linspace(-3.5, 3.5, 100)
         y2 = norm.pdf(x2, loc=0, scale=1)
-        
-        def desenhar_grafico_z(tamanho_atual):
-            ax2.clear()
-            
-            # Plota as barras
-            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
-            ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
-            # Fixa tudo milimetricamente
-            ax2.set_xlim([-3.5, 3.5])
-            ax2.set_ylim([0, 0.5])
-            ax2.grid(True, alpha=0.1)
-            ax2.legend(fontsize=8)
-            ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
+        # Plota as barras do frame atual
+        ax2.hist(
+            medias_padronizadas[:tamanho_renderizar],
+            bins=30,
+            density=True,
+            alpha=0.6,
+            color='#2ecc71',
+        )
+        ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
-            # TRUQUE ANTI-PISCADA: Salva o gráfico na memória como imagem em vez de recriar o componente de plot
-            buf = io.BytesIO()
-            fig2.savefig(buf, format='png', bbox_inches='tight')
-            buf.seek(0)
-            
-            # Atualiza o container st.empty mandando apenas os bytes da imagem (renderização instantânea)
-            espaco_grafico_z.image(buf, use_container_width=True)
-            buf.close()
+        # Fixa eixos milimetricamente
+        ax2.set_xlim([-3.5, 3.5])
+        ax2.set_ylim([0, 0.5])
+        ax2.grid(True, alpha=0.1)
+        ax2.legend(fontsize=8)
+        ax2.set_title(f"Amostras em Z: {tamanho_renderizar}", fontsize=9)
 
-        # --- MECANISMO DE ANIMAÇÃO SEM TRAVAMENTO ---
-        # Inicializa o estado do frame na memória do Streamlit        
-        state_key = f"frame_{key}"
-        if state_key not in st.session_state:
-            st.session_state[state_key] = None
-
-        # Se clicou no botão, engaja o início da animação
-        if animacao:
-            st.session_state[state_key] = 10
-
-        # Se a animação estiver rodando (passo a passo)
-        if st.session_state[state_key] is not None:
-            frame_atual = st.session_state[state_key]
-            desenhar_grafico_z(frame_atual)
-            
-            # Define o tamanho do salto por frame (divide em ~40 passos para ir rápido e fluido)
-            passo_dinamico = max(1, int(quantd_amostras / 40))
-            proximo_frame = frame_atual + passo_dinamico
-            
-            if proximo_frame <= quantd_amostras:
-                st.session_state[state_key] = proximo_frame
-                time.sleep(0.01) # Pequena pausa para o olho humano acompanhar o crescimento
-                st.rerun() # Força o Streamlit a renderizar este frame AGORA na tela
-            else:
-                # Fim da animação: estabiliza no valor total
-                st.session_state[state_key] = None
-                desenhar_grafico_z(quantd_amostras)
-        else:
-            # Se não está animando, responde estaticamente ao Slider de forma independente
-            desenhar_grafico_z(posc_slider)
-
+        # Converte para bytes (Anti-piscada definitivo)
+        buf = io.BytesIO()
+        fig2.savefig(buf, format='png', bbox_inches='tight')
+        espaco_grafico_z.image(buf, use_container_width=True)
         plt.close(fig2)
-                
-    animacao = st.button("Ver Animação Histograma")
-    posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras)
+        buf.close()
 
+
+# ==========================================
+# CÓDIGO DO FLUXO PRINCIPAL (FORA DA FUNÇÃO)
+# ==========================================
+
+# 1. Cria os controles fora e antes das colunas gráficos
+st.write("### Controles de Visualização")
+animacao = st.button("▶️ Ver Animação Histograma")
+posc_slider = st.slider(
+    "Quantidade de amostras (Z):",
+    10,
+    quantd_amostras,
+    quantd_amostras,
+    key="slider_global",
+)
+
+# 2. Gerencia o estado da animação no fluxo principal
+if "frame_ativo" not in st.session_state:
+    st.session_state.frame_ativo = None
+
+if animacao:
+    st.session_state.frame_ativo = 10
+
+# 3. Determina qual tamanho enviar para a função rodar
+if st.session_state.frame_ativo is not None:
+    tamanho_atual = st.session_state.frame_ativo
+
+    # Renderiza o frame atual
+    graficos(
+        media_u,
+        sigma_media,
+        quantd_amostras,
+        medias_amostrais,
+        medias_padronizadas,
+        tamanho_atual,
+    )
+
+    # Avança para o próximo frame
+    passo_dinamico = max(1, int(quantd_amostras / 40))
+    proximo = tamanho_atual + passo_dinamico
+
+    if proximo <= quantd_amostras:
+        st.session_state.frame_ativo = proximo
+        time.sleep(0.01)
+        st.rerun()
+    else:
+        st.session_state.frame_ativo = None
+        st.rerun()
+else:
+    # Se não estiver animando, manda o valor fixo escolhido no slider
+    graficos(
+        media_u,
+        sigma_media,
+        quantd_amostras,
+        medias_amostrais,
+        medias_padronizadas,
+        posc_slider,
+    )
+    
 def SimuladorTCL():
     st.title("Simulador TCL")
     #Simula o TCL para as distribuições
