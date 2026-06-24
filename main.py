@@ -73,7 +73,6 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
         st.subheader("Escala Padronizada (Z)")
         espaco_grafico_z = st.empty()
 
-        # 1. CRIAMOS A FIGURA APENAS UMA VEZ FORA DO LOOP (Garante velocidade máxima)
         fig2, ax2 = plt.subplots(figsize=(5, 4))
         x2 = np.linspace(-3.5, 3.5, 100)
         y2 = norm.pdf(x2, loc=0, scale=1)
@@ -82,9 +81,7 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
         posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
 
         if animacao:
-            # 2. Com 1000 amostras, atualizar de 20 em 20 dá 50 frames perfeitos e leves
-            tamanho_passo = max(1, int(quantd_amostras / 50))
-            passos = range(10, quantd_amostras + 1, tamanho_passo)
+            passos = range(10, quantd_amostras + 1, 1)
             
             for tam in passos:
                 ax2.clear() # Limpa apenas o desenho anterior, mantém a janela da figura aberta
@@ -98,7 +95,7 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
                 
                 # Atualiza o mesmo espaço do Streamlit instantaneamente
                 espaco_grafico_z.pyplot(fig2)
-                time.sleep(0.01) # Delay curtinho
+                time.sleep(0.005) # Delay curtinho
                 
             plt.close(fig2)
             
