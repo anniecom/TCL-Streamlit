@@ -85,7 +85,7 @@ def graficos(
             st.session_state[gif_key] = None
 
         if animacao:
-            with st.spinner("Gerando animação fluida..."):
+            with st.spinner("Gerando animação..."):
                 frames = []
                 # Divide em 30 passos para ficar visualmente contínuo e rápido
                 passos = np.linspace(10, quantd_amostras, 30, dtype=int)
@@ -130,7 +130,7 @@ def graficos(
                     format='GIF',
                     save_all=True,
                     append_images=frames[1:],
-                    duration=100,  # Tempo de cada frame em milissegundos (100ms = fluido)
+                    duration=500,  # Tempo de cada frame em milissegundos (100ms = fluido)
                     loop=0,  # 0 significa repetição infinita do GIF
                 )
                 st.session_state[gif_key] = gif_buffer.getvalue()
@@ -140,7 +140,7 @@ def graficos(
         if st.session_state[gif_key] is not None:
             # Mostra o GIF. O navegador roda ele liso sem piscar os eixos
             st.image(st.session_state[gif_key], use_container_width=True)
-            if st.button("Voltar para gráfico fixo"):
+            if st.button("Parar"):
                 st.session_state[gif_key] = None
                 st.rerun()
         else:
