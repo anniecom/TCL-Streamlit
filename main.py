@@ -77,8 +77,6 @@ def graficos(
     with coli2:
         st.subheader("Escala Padronizada (Z)")
 
-        animacao = st.button("Ver Animação Histograma", key="bt" + key)
-
         # Estado para guardar o GIF gerado na sessão
         gif_key = f"gif_{key}"
         if gif_key not in st.session_state:
@@ -136,6 +134,8 @@ def graficos(
                 st.session_state[gif_key] = gif_buffer.getvalue()
                 gif_buffer.close()
 
+        animacao = st.button("Ver Animação Histograma", key="bt" + key)
+        
         # Exibição limpa na tela
         if st.session_state[gif_key] is not None:
             # Mostra o GIF. O navegador roda ele liso sem piscar os eixos
