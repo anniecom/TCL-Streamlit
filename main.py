@@ -97,7 +97,8 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
         posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key= "sl" + key)
 
         if animacao:
-            passos = range(10, quantd_amostras,10)
+            tamanho_passo = max(1, int(quantd_amostras / 50)) 
+            passos = range(10, quantd_amostras + 1, tamanho_passo)
             for tam in passos:
                 desenhar_grafico_z(tam)
                 time.sleep(0.05)
