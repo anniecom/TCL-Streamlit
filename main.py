@@ -98,9 +98,8 @@ def graficos(
         st.subheader("Escala Padronizada (Z)")
 
         # Containers fixos para travar a estrutura do HTML do Streamlit
-        container_controles = st.container()
         espaco_grafico_z = st.empty()
-
+        container_controles = st.container()
 
         # Configuração da Figura Z
         fig2 = plt.figure(figsize=(5, 4))
