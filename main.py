@@ -45,16 +45,16 @@ class GeradorTCL:
         #Retorna as médias amostrais, média e sigima teórcios da distribuiçcap
         return medias_amostrais, media_dist, sigma_dist
 
-def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_padronizadas, key="bt"):
-    # Faz os graficos de histograma da normal
+ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padronizadas, key = "bt"):
+    #Faz os graficos de histograma da normal
     coli1, coli2 = st.columns(2)
 
     with coli1:
-        # Histograma dos dados nao padronizados (TOTALMENTE ESTÁTICO)
+        #Histograma dos dados nao padronizados
         st.subheader("Escala Original")
-        fig1, ax1 = plt.subplots(figsize=(5, 4))
-        
-        # Usamos TODAS as amostras (quantd_amostras) para ele nunca mudar ou encolher
+        fig1 = plt.figure(figsize=(5, 4))
+        ax1 = fig1.add_subplot(111)
+
         contagens, intervalos, _ = ax1.hist(
             medias_amostrais[:quantd_amostras], bins=30, density=True, alpha=0.6, color='#2b5c8f', label='Médias Amostrais'
         )
@@ -66,57 +66,43 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
         ax1.grid(True, alpha=0.1)
 
         st.pyplot(fig1)
-        plt.close(fig1) # Fecha imediatamente para não vazar pro outro gráfico
+        plt.close(fig1)
 
     with coli2:
+        #Histograma dos dados padronizados
         st.subheader("Escala Padronizada (Z)")
-        
-        # Elementos de controle
-        animacao = st.button("Ver Animação Histograma", key="bt" + key)
-        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
-        
-        # Espaço isolado onde APENAS o gráfico Z vai atualizar
         espaco_grafico_z = st.empty()
 
-        # Criamos a figura Z isolada
-        fig2, ax2 = plt.subplots(figsize=(5, 4))
-        x2 = np.linspace(-3.5, 3.5, 100)
-        y2 = norm.pdf(x2, loc=0, scale=1)
+        def desenhar_grafico_z(tamanho_atual):
+            fig2 = plt.figure(figsize=(5, 4))
+            ax2 = fig2.add_subplot(111)
 
-        def atualizar_desenho_z(tamanho_atual):
-            ax2.clear() # Limpa apenas o eixo Z
-            
-            # Plota o corte do vetor correspondente ao frame
-            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
+            contagens2, intervalos2, _ = ax2.hist(
+                medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71'
+            )
+
+            x2 = np.linspace(intervalos2[0], intervalos2[-1], 100)
+            y2 = norm.pdf(x2, loc=0, scale=1)
             ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
-            # Trava eixos para não dar trancos visuais
-            ax2.set_xlim([-3.5, 3.5])
-            ax2.set_ylim([0, 0.5]) 
+            ax2.set_xlim([min(-3.5, intervalos2[0]), max(3.5, intervalos2[-1])])
             ax2.grid(True, alpha=0.1)
             ax2.legend(fontsize=8)
-            ax2.set_title(f"Amostras acumuladas: {tamanho_atual}", fontsize=9)
-            
+
             espaco_grafico_z.pyplot(fig2)
+            plt.close(fig2)
 
-        # Execução da animação ou estado estático
+        animacao = st.button("Ver Animação Histograma", key = "bt" + key)
+        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key= "sl" + key)
+
         if animacao:
-            # Força o número de frames para 40 para carregar instantaneamente na web
-            tamanho_passo = max(1, int(quantd_amostras / 40))
-            passos = range(10, quantd_amostras + 1, tamanho_passo)
-            
+            passos = np.linspace(10, quantd_amostras, 1, dtype=int)
             for tam in passos:
-                atualizar_desenho_z(tam)
-                st.rerun()
-                time.sleep(0.1) # Delay mínimo para manter a fluidez
-                
-            # Frame final obrigatório para cravar o valor máximo
-            atualizar_desenho_z(quantd_amostras)
+                desenhar_grafico_z(tam)
+                time.sleep(0.1)
         else:
-            # Se mover o slider manualmente, atualiza apenas o Z
-            atualizar_desenho_z(posc_slider)
+            desenhar_grafico_z(posc_slider)
 
-        plt.close(fig2)
         
 def SimuladorTCL():
     st.title("Simulador TCL")
