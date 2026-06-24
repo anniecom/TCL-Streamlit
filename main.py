@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import time
+import io
 
 class GeradorTCL:
     @staticmethod
@@ -54,10 +55,11 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
         st.subheader("Escala Original")
         fig1 = plt.figure(figsize=(5, 4))
         ax1 = fig1.add_subplot(111)
+        posc_i = quantd_amostras
 
         # Usamos sempre o total de amostras fixo para ele NUNCA mudar ou piscar durante a animação do outro lado
         contagens, intervalos, _ = ax1.hist(
-            medias_amostrais[:quantd_amostras], bins=30, density=True, alpha=0.6, color='#2b5c8f', label='Médias Amostrais'
+            medias_amostrais[:posc_i], bins=30, density=True, alpha=0.6, color='#2b5c8f', label='Médias Amostrais'
         )
 
         x1 = np.linspace(intervalos.min(), intervalos.max(), 100)
@@ -83,23 +85,29 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
         ax2 = fig2.add_subplot(111)
         x2 = np.linspace(-3.5, 3.5, 100)
         y2 = norm.pdf(x2, loc=0, scale=1)
-
+        
         def desenhar_grafico_z(tamanho_atual):
-            ax2.clear() # Limpa apenas o conteúdo interno para velocidade máxima
+            ax2.clear()
             
-            # Plota as barras até o tamanho do frame atual
+            # Plota as barras
             ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
             ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
-            # TRAVA OS EIXOS: Evita que o gráfico mude de tamanho e dê saltos visuais
+            # Fixa tudo milimetricamente
             ax2.set_xlim([-3.5, 3.5])
-            ax2.set_ylim([0, 0.5]) # Fixa o teto para ver as médias se aproximando da curva perfeitamente
-            
+            ax2.set_ylim([0, 0.5])
             ax2.grid(True, alpha=0.1)
             ax2.legend(fontsize=8)
             ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
 
-            espaco_grafico_z.pyplot(fig2)
+            # TRUQUE ANTI-PISCADA: Salva o gráfico na memória como imagem em vez de recriar o componente de plot
+            buf = io.BytesIO()
+            fig2.savefig(buf, format='png', bbox_inches='tight')
+            buf.seek(0)
+            
+            # Atualiza o container st.empty mandando apenas os bytes da imagem (renderização instantânea)
+            espaco_grafico_z.image(buf, use_container_width=True)
+            buf.close()
 
         # --- MECANISMO DE ANIMAÇÃO SEM TRAVAMENTO ---
         # Inicializa o estado do frame na memória do Streamlit
