@@ -98,22 +98,18 @@ def graficos(
     with coli2:
         st.subheader("Escala Padronizada (Z)")
 
-        container_controles = st.container()
-        # Containers fixos para travar a estrutura do HTML do Streamlit
-        st.markdown(
-            """
-            <style>
-                .quadro-suporte {
-                    height: 350px;
-                    width: 100%;
-                    background-color: white; /* Fica invisível se adaptando ao tema */
-                }
-            </style>
-            <div class="quadro-suporte"></div>
-            """, 
-            unsafe_allow_html=True
-        )
+        animacao = st.button("Ver Animação Histograma", key="bt" + key)
+        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
+        
         espaco_grafico_z = st.empty()
+
+        # 1. FORÇAMOS A FIGURA A TER FUNDO BRANCO SÓLIDO (facecolor)
+        fig2 = plt.figure(figsize=(5, 4), facecolor='white')
+        ax2 = fig2.add_subplot(111)
+        ax2.set_facecolor('white') # Fundo interno também branco
+        
+        x2 = np.linspace(-3.5, 3.5, 100)
+        y2 = norm.pdf(x2, loc=0, scale=1)
        
         # Configuração da Figura Z
         fig2 = plt.figure(figsize=(5, 4))
@@ -140,10 +136,6 @@ def graficos(
             # Força a atualização mantendo a mesma tag de referência na tela
             espaco_grafico_z.image(buf, use_container_width=True)
             buf.close()
-
-        with container_controles:
-            animacao = st.button("Ver Animação Histograma", key="bt" + key)
-            posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
 
         # --- Lógica de Controle da Velocidade e Estado ---
         state_key = f"frame_{key}"
