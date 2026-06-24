@@ -73,11 +73,7 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
 
     with coli2:
         # 2. HISTOGRAMA DA ESCALA PADRONIZADA (ANIMADO OU SLIDER)
-        st.subheader("Escala Padronizada (Z)")
-        
-        animacao = st.button("Ver Animação Histograma", key="bt" + key)
-        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
-        
+        st.subheader("Escala Padronizada (Z)")        
         espaco_grafico_z = st.empty()
 
         # Criamos a estrutura do gráfico Z aproveitando a mesma figura
@@ -111,6 +107,9 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
 
         # --- MECANISMO DE ANIMAÇÃO SEM TRAVAMENTO ---
         # Inicializa o estado do frame na memória do Streamlit
+        animacao = st.button("Ver Animação Histograma", key="bt" + key)
+        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
+        
         state_key = f"frame_{key}"
         if state_key not in st.session_state:
             st.session_state[state_key] = None
