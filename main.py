@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import time
 import io
-import imageio
+from PIL import Image
 
 class GeradorTCL:
     @staticmethod
@@ -79,18 +79,17 @@ def graficos(
 
         animacao = st.button("Ver Animação Histograma", key="bt" + key)
 
-        # 1. ESTADO PARA GUARDAR O GIF GERADO
+        # Estado para guardar o GIF gerado na sessão
         gif_key = f"gif_{key}"
         if gif_key not in st.session_state:
             st.session_state[gif_key] = None
 
-        # 2. SE CLICAR EM ANIMAR, GERA TODOS OS FRAMES DE UMA VEZ NA MEMÓRIA
         if animacao:
             with st.spinner("Gerando animação fluida..."):
                 frames = []
+                # Divide em 30 passos para ficar visualmente contínuo e rápido
                 passos = np.linspace(10, quantd_amostras, 30, dtype=int)
 
-                # Criamos a estrutura fixa do gráfico
                 fig2 = plt.figure(figsize=(5, 4))
                 ax2 = fig2.add_subplot(111)
                 x2 = np.linspace(-3.5, 3.5, 100)
@@ -98,7 +97,7 @@ def graficos(
 
                 for tam in passos:
                     ax2.clear()
-                    # Desenha as barras que mudam
+                    # Plota apenas as barras subindo
                     ax2.hist(
                         medias_padronizadas[:tam],
                         bins=30,
@@ -106,7 +105,7 @@ def graficos(
                         alpha=0.6,
                         color='#2ecc71',
                     )
-                    # Desenha os eixos e curva que são fixos
+                    # Mantém os eixos e a linha estáticos no mesmo lugar do frame
                     ax2.plot(x2, y2, 'r-', lw=2)
                     ax2.set_xlim([-3.5, 3.5])
                     ax2.set_ylim([0, 0.5])
@@ -115,31 +114,37 @@ def graficos(
                         f"Amostras acumuladas: {tam}", fontsize=9
                     )
 
-                    # Salva o frame atual na memória como imagem pura
+                    # Salva o frame na memória RAM como objeto de imagem pura
                     buf = io.BytesIO()
                     fig2.savefig(buf, format='png', bbox_inches='tight', dpi=120)
                     buf.seek(0)
-                    frames.append(imageio.v2.imread(buf))
-                    buf.close()
+                    frames.append(Image.open(buf))
+                    # Não fechamos o buffer aqui dentro para o PIL não perder a referência da imagem
 
                 plt.close(fig2)
 
-                # Compila todos os frames em um GIF na memória
+                # TRUQUE DA PIL: Junta todas as imagens e compila em um GIF na memória
                 gif_buffer = io.BytesIO()
-                imageio.mimsave(
-                    gif_buffer, frames, format='GIF', fps=10, loop=0
+                frames[0].save(
+                    gif_buffer,
+                    format='GIF',
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=100,  # Tempo de cada frame em milissegundos (100ms = fluido)
+                    loop=0,  # 0 significa repetição infinita do GIF
                 )
                 st.session_state[gif_key] = gif_buffer.getvalue()
+                gif_buffer.close()
 
-        # 3. EXIBIÇÃO NA TELA
+        # Exibição limpa na tela
         if st.session_state[gif_key] is not None:
-            # Exibe o GIF gerado. O navegador roda ele nativamente em loop perfeitamente liso
+            # Mostra o GIF. O navegador roda ele liso sem piscar os eixos
             st.image(st.session_state[gif_key], use_container_width=True)
             if st.button("Voltar para gráfico fixo"):
                 st.session_state[gif_key] = None
                 st.rerun()
         else:
-            # Caso não tenha clicado no botão, mostra apenas o gráfico final estático padrão
+            # Caso padrão: Mostra o gráfico estático final normal
             fig_fixo = plt.figure(figsize=(5, 4))
             ax_fixo = fig_fixo.add_subplot(111)
             ax_fixo.hist(
