@@ -97,21 +97,15 @@ def graficos(
     with coli2:
         st.subheader("Escala Padronizada (Z)")
 
-        # CRÍTICO: Criamos containers fixos para os inputs não pularem de lugar na tela
+        # Containers fixos para travar a estrutura do HTML do Streamlit
         container_controles = st.container()
-        container_grafico_z = st.empty()
+        espaco_grafico_z = st.empty()
 
         with container_controles:
             animacao = st.button("Ver Animação Histograma", key="bt" + key)
-            posc_slider = st.slider(
-                "Quantidade de amostras (Z):",
-                10,
-                quantd_amostras,
-                quantd_amostras,
-                key="sl" + key,
-            )
+            posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
 
-        # Configuração da Figura Z (Criada uma única vez por run)
+        # Configuração da Figura Z
         fig2 = plt.figure(figsize=(5, 4))
         ax2 = fig2.add_subplot(111)
         x2 = np.linspace(-3.5, 3.5, 100)
@@ -138,7 +132,7 @@ def graficos(
             espaco_grafico_z.image(buf, use_container_width=True)
             buf.close()
 
-        # --- Lógica de Estado da Animação Interna ---
+        # --- Lógica de Controle da Velocidade e Estado ---
         state_key = f"frame_{key}"
         if state_key not in st.session_state:
             st.session_state[state_key] = None
@@ -150,19 +144,19 @@ def graficos(
             frame_atual = st.session_state[state_key]
             desenhar_grafico_z(frame_atual)
 
-            # Ajusta os passos para renderizar ~40 frames fluidos
-            passo_dinamico = max(1, int(quantd_amostras / 40))
+            # Reduzimos para ~30 frames para a rede processar sem engasgar
+            passo_dinamico = max(1, int(quantd_amostras / 30))
             proximo_frame = frame_atual + passo_dinamico
 
             if proximo_frame <= quantd_amostras:
                 st.session_state[state_key] = proximo_frame
-                time.sleep(0.6)
-                st.rerun()  # Força o Streamlit a redesenhar o próximo frame instantaneamente
+                # AUMENTADO: de 0.01 para 0.08 para dar tempo de ver as médias entrando e suavizar a piscada do rerun
+                time.sleep(0.08) 
+                st.rerun()
             else:
                 st.session_state[state_key] = None
                 desenhar_grafico_z(quantd_amostras)
         else:
-            # Se não houver animação ativa, obedece o Slider estático
             desenhar_grafico_z(posc_slider)
 
         plt.close(fig2)
