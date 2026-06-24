@@ -100,7 +100,7 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
             passos = range(10, quantd_amostras+ 1, 5)
             for tam in passos:
                 desenhar_grafico_z(tam)
-                
+                time.sleep(0.005)
             desenhar_grafico_z(quantd_amostras)
 
         else:
