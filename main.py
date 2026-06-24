@@ -233,8 +233,7 @@ def Teste():
     n_amostra = st.number_input("Tamanho da Amostra (n)", value=30, min_value=1)
 
     dist = {
-        ("Binomial", "Probabilidade sucesso", 0.05),
-        ("Binomial", "Probabilidade sucesso",  0.1),
+        ("Binomial", "Probabilidade sucesso",  0.09),
         ("Binomial", "Probabilidade sucesso",  0.5),
         ("Exponencial", "Lambda", 10),
         ("Uniforme", "a, b",  (10.6, 40.3))
