@@ -136,10 +136,13 @@ def graficos(
             ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
 
             # Transforma em imagem na memória (Evita o flicker/pisca do html antigo)
+            # Salvando o buffer
             buf = io.BytesIO()
-            fig2.savefig(buf, format='png', bbox_inches='tight')
+            fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100) # dpi fixo ajuda a estabilizar o tamanho da imagem
             buf.seek(0)
-            container_grafico_z.image(buf, use_container_width=True)
+            
+            # Força a atualização mantendo a mesma tag de referência na tela
+            espaco_grafico_z.image(buf, use_container_width=True)
             buf.close()
 
         # --- Lógica de Estado da Animação Interna ---
@@ -161,7 +164,7 @@ def graficos(
             if proximo_frame <= quantd_amostras:
                 st.session_state[state_key] = proximo_frame
                 time.sleep(0.6)
-                #st.rerun()  # Força o Streamlit a redesenhar o próximo frame instantaneamente
+                st.rerun()  # Força o Streamlit a redesenhar o próximo frame instantaneamente
             else:
                 st.session_state[state_key] = None
                 desenhar_grafico_z(quantd_amostras)
