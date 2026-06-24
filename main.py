@@ -238,13 +238,21 @@ def Teste():
         ("Exponencial", "Lambda", 10),
         ("Uniforme", "a, b",  (10.6, 40.3))
     }
+
+    comment=[
+        ("A convergência é lenta. Como a probabilidade de sucesso é muito baixa, a distribuição é assimétrica. Necessitando um N maior para que a média amostral consiga convergir para uma Normal."),
+        ("A convergência é rápida. Como a distribuição original já é simétrica, o histograma das médias amostrais já vai parecer uma curva Normal."),
+        ("A convergência é lenta. Como a distribuição é assimétrica, logo precisa de um número robusto de amostras para que o consiga convergir para uma Normal."),
+        ("A convergência é rápida.Como a distribuição é simétrica, a média amostral converge para uma Normal rapidamente.")
+    ]
     
     abas = st.tabs([f"{d[0]} ({d[2]})" for d in dist])
     i = 0
     for d in dist:
         #Para cada teste simula o TCL
         opt, tipo_p, param = d
-
+        
+        st.text(comment[i])
         with abas[i]:
             st.subheader(f"Teste: {opt} | {tipo_p} = {param}")
             medias_amostrais, media_u, sigma = GeradorTCL.gerar_medias(opt, n_amostra, quantd_amostras, param)
