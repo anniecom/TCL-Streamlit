@@ -106,10 +106,7 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
             buf.close()
 
         # --- MECANISMO DE ANIMAÇÃO SEM TRAVAMENTO ---
-        # Inicializa o estado do frame na memória do Streamlit
-        animacao = st.button("Ver Animação Histograma", key="bt" + key)
-        posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
-        
+        # Inicializa o estado do frame na memória do Streamlit        
         state_key = f"frame_{key}"
         if state_key not in st.session_state:
             st.session_state[state_key] = None
@@ -141,6 +138,9 @@ def graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_pad
 
         plt.close(fig2)
         
+animacao = st.button("Ver Animação Histograma", key="bt" + key)
+posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
+
 def SimuladorTCL():
     st.title("Simulador TCL")
     #Simula o TCL para as distribuições
