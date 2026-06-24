@@ -82,6 +82,8 @@ def graficos(
         if gif_key not in st.session_state:
             st.session_state[gif_key] = None
 
+        animacao = st.button("Ver Animação Histograma", key="bt" + key)
+        
         if animacao:
             with st.spinner("Gerando animação..."):
                 frames = []
@@ -133,8 +135,6 @@ def graficos(
                 )
                 st.session_state[gif_key] = gif_buffer.getvalue()
                 gif_buffer.close()
-
-        animacao = st.button("Ver Animação Histograma", key="bt" + key)
         
         # Exibição limpa na tela
         if st.session_state[gif_key] is not None:
