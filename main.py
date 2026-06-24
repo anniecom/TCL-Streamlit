@@ -45,7 +45,7 @@ class GeradorTCL:
         #Retorna as médias amostrais, média e sigima teórcios da distribuiçcap
         return medias_amostrais, media_dist, sigma_dist
 
- def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padronizadas, key = "bt"):
+def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padronizadas, key = "bt"):
     #Faz os graficos de histograma da normal
     coli1, coli2 = st.columns(2)
 
