@@ -119,23 +119,16 @@ def graficos(
 
         def desenhar_grafico_z(tamanho_atual):
             ax2.clear()
-            ax2.hist(
-                medias_padronizadas[:tamanho_atual],
-                bins=30,
-                density=True,
-                alpha=0.6,
-                color='#2ecc71',
-            )
+            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
             ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
 
-            # Travamento milimétrico dos eixos para não dar efeito terremoto
+            # Fixação milimétrica dos eixos
             ax2.set_xlim([-3.5, 3.5])
             ax2.set_ylim([0, 0.5])
             ax2.grid(True, alpha=0.1)
             ax2.legend(fontsize=8)
             ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
 
-            # Transforma em imagem na memória (Evita o flicker/pisca do html antigo)
             # Salvando o buffer
             buf = io.BytesIO()
             fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100) # dpi fixo ajuda a estabilizar o tamanho da imagem
