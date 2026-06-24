@@ -98,6 +98,7 @@ def graficos(
     with coli2:
         st.subheader("Escala Padronizada (Z)")
 
+        container_controles = st.container()
         # Containers fixos para travar a estrutura do HTML do Streamlit
         st.markdown(
             """
@@ -106,7 +107,7 @@ def graficos(
                     height: 350px;
                     width: 100%;
                     background-color: white; /* Fica invisível se adaptando ao tema */
-                    margin-bottom: -350px; /* Truque CSS para o gráfico plotar exatamente por cima dele */
+                    margin-bottom: -50px; /* Truque CSS para o gráfico plotar exatamente por cima dele */
                 }
             </style>
             <div class="quadro-suporte"></div>
@@ -114,8 +115,7 @@ def graficos(
             unsafe_allow_html=True
         )
         espaco_grafico_z = st.empty()
-        container_controles = st.container()
-
+       
         # Configuração da Figura Z
         fig2 = plt.figure(figsize=(5, 4))
         ax2 = fig2.add_subplot(111)
