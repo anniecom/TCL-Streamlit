@@ -160,7 +160,7 @@ def graficos(
 
             if proximo_frame <= quantd_amostras:
                 st.session_state[state_key] = proximo_frame
-                time.sleep(0.01)
+                time.sleep(0.1)
                 st.rerun()  # Força o Streamlit a redesenhar o próximo frame instantaneamente
             else:
                 st.session_state[state_key] = None
