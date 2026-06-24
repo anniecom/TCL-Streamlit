@@ -97,42 +97,59 @@ def graficos(
     with coli2:
         st.subheader("Escala Padronizada (Z)")
 
-        # Containers fixos para travar a estrutura do HTML do Streamlit
         container_controles = st.container()
         espaco_grafico_z = st.empty()
 
         with container_controles:
             animacao = st.button("Ver Animação Histograma", key="bt" + key)
-            posc_slider = st.slider("Quantidade de amostras (Z):", 10, quantd_amostras, quantd_amostras, key="sl" + key)
+            posc_slider = st.slider(
+                "Quantidade de amostras (Z):",
+                10,
+                quantd_amostras,
+                quantd_amostras,
+                key="sl" + key,
+            )
 
-        # Configuração da Figura Z
+        # Configuração da Figura Z estequiométrica
         fig2 = plt.figure(figsize=(5, 4))
         ax2 = fig2.add_subplot(111)
         x2 = np.linspace(-3.5, 3.5, 100)
         y2 = norm.pdf(x2, loc=0, scale=1)
 
-        def desenhar_grafico_z(tamanho_atual):
+        def gerar_bytes_z(tamanho_atual):
             ax2.clear()
-            ax2.hist(medias_padronizadas[:tamanho_atual], bins=30, density=True, alpha=0.6, color='#2ecc71')
+            ax2.hist(
+                medias_padronizadas[:tamanho_atual],
+                bins=30,
+                density=True,
+                alpha=0.6,
+                color='#2ecc71',
+            )
             ax2.plot(x2, y2, 'r-', lw=2, label='N(0,1)')
-
-            # Fixação milimétrica dos eixos
             ax2.set_xlim([-3.5, 3.5])
             ax2.set_ylim([0, 0.5])
             ax2.grid(True, alpha=0.1)
             ax2.legend(fontsize=8)
             ax2.set_title(f"Amostras em Z: {tamanho_atual}", fontsize=9)
 
-            # Salvando o buffer
             buf = io.BytesIO()
-            fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100) # dpi fixo ajuda a estabilizar o tamanho da imagem
+            fig2.savefig(buf, format='png', bbox_inches='tight', dpi=100)
             buf.seek(0)
-            
-            # Força a atualização mantendo a mesma tag de referência na tela
-            espaco_grafico_z.image(buf, use_container_width=True)
+            dados_imagem = buf.getvalue()
             buf.close()
+            return dados_imagem
 
-        # --- Lógica de Controle da Velocidade e Estado ---
+        # --- TRUQUE DO SHIELD / PLACEHOLDER ---
+        # Inicializa a imagem de fundo estática na sessão para servir de escudo contra o "vazio"
+        bg_key = f"bg_image_{key}"
+        if bg_key not in st.session_state:
+            # Salva o estado com o valor cheio inicial para servir de placeholder
+            st.session_state[bg_key] = gerar_bytes_z(quantd_amostras)
+
+        # Coloca o escudo de fundo padrão no container antes de qualquer coisa
+        espaco_grafico_z.image(st.session_state[bg_key], use_container_width=True)
+
+        # Lógica de controle de estados da animação
         state_key = f"frame_{key}"
         if state_key not in st.session_state:
             st.session_state[state_key] = None
@@ -142,22 +159,27 @@ def graficos(
 
         if st.session_state[state_key] is not None:
             frame_atual = st.session_state[state_key]
-            desenhar_grafico_z(frame_atual)
+            
+            # Sobrescreve o placeholder com o frame em movimento
+            img_frame = gerar_bytes_z(frame_atual)
+            espaco_grafico_z.image(img_frame, use_container_width=True)
 
-            # Reduzimos para ~30 frames para a rede processar sem engasgar
-            passo_dinamico = max(1, int(quantd_amostras / 30))
+            passo_dinamico = max(1, int(quantd_amostras / 35))
             proximo_frame = frame_atual + passo_dinamico
 
             if proximo_frame <= quantd_amostras:
                 st.session_state[state_key] = proximo_frame
-                # AUMENTADO: de 0.01 para 0.08 para dar tempo de ver as médias entrando e suavizar a piscada do rerun
-                time.sleep(0.08) 
+                time.sleep(0.04)  # Tempo equilibrado
                 st.rerun()
             else:
                 st.session_state[state_key] = None
-                desenhar_grafico_z(quantd_amostras)
+                # Finaliza salvando o gráfico completo final como novo placeholder padrão
+                st.session_state[bg_key] = gerar_bytes_z(quantd_amostras)
+                espaco_grafico_z.image(st.session_state[bg_key], use_container_width=True)
         else:
-            desenhar_grafico_z(posc_slider)
+            # Se moveu o slider manualmente, gera o frame estático e atualiza o escudo
+            img_slider = gerar_bytes_z(posc_slider)
+            espaco_grafico_z.image(img_slider, use_container_width=True)
 
         plt.close(fig2)
 
