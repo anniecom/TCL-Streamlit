@@ -98,6 +98,20 @@ def graficos(
         st.subheader("Escala Padronizada (Z)")
 
         # Containers fixos para travar a estrutura do HTML do Streamlit
+        st.markdown(
+            """
+            <style>
+                .quadro-suporte {
+                    height: 350px;
+                    width: 100%;
+                    background-color: transparent; /* Fica invisível se adaptando ao tema */
+                    margin-bottom: -350px; /* Truque CSS para o gráfico plotar exatamente por cima dele */
+                }
+            </style>
+            <div class="quadro-suporte"></div>
+            """, 
+            unsafe_allow_html=True
+        )
         espaco_grafico_z = st.empty()
         container_controles = st.container()
 
