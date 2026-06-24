@@ -98,10 +98,13 @@ def graficos(media_u, sigma_media, quantd_amostras,medias_amostrais,medias_padro
 
         if animacao:
             tamanho_passo = max(1, int(quantd_amostras / 50)) 
-            passos = range(10, quantd_amostras + 1, tamanho_passo)
+            passos = range(10, quantd_amostras+ 1, tamanho_passo)
             for tam in passos:
                 desenhar_grafico_z(tam)
                 time.sleep(0.05)
+                
+            desenhar_grafico_z(quantd_amostras)
+
         else:
             desenhar_grafico_z(posc_slider)
 
