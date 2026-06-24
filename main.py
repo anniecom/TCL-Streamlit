@@ -252,13 +252,14 @@ def Teste():
         #Para cada teste simula o TCL
         opt, tipo_p, param = d
         
-        st.text(comment[i])
+        
         with abas[i]:
             st.subheader(f"Teste: {opt} | {tipo_p} = {param}")
             medias_amostrais, media_u, sigma = GeradorTCL.gerar_medias(opt, n_amostra, quantd_amostras, param)
             sigma_media = sigma / np.sqrt(n_amostra)
             medias_padronizadas = (medias_amostrais - media_u) / sigma_media
             graficos(media_u, sigma_media, quantd_amostras, medias_amostrais, medias_padronizadas, (opt + str(i)))
+            st.text(comment[i])
 
         i += 1
 
